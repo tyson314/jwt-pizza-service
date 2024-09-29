@@ -1,0 +1,59 @@
+const request = require('supertest');
+const app = require('../service');
+const { DB } = require('../database/database.js')
+
+const testUser = { name: 'pizza diner', email: 'reg@test.com', password: 'a' };
+let testUserAuthToken;
+
+beforeAll(async () => {
+  testUser.email = Math.random().toString(36).substring(2, 12) + '@test.com';
+  const registerRes = await request(app).post('/api/auth').send(testUser);
+  testUserAuthToken = registerRes.body.token;
+});
+
+test('login', async () => {
+  const loginRes = await request(app).put('/api/auth').send(testUser);
+  expect(loginRes.status).toBe(200);
+  expect(loginRes.body.token).toMatch(/^[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*$/);
+
+  const { password, ...user } = { ...testUser, roles: [{ role: 'diner' }] };
+  expect(loginRes.body.user).toMatchObject(user);
+});
+
+test('invalid login rejected', async () => {
+  const loginRes1 = await request(app).put('/api/auth').send({name: 'dude', email: 'man@test.com', password: 'a' });
+  expect(loginRes1.status).toBe(404);
+})
+
+test('register a new user', async () => {
+  const registerRes = await request(app).post('/api/auth').send(testUser);
+  expect(registerRes.status).toBe(200);
+  expect(registerRes.body.token).toMatch(/^[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*$/);
+
+  const { password, ...user } = { ...testUser, roles: [{ role: 'diner' }] };
+  expect(registerRes.body.user).toMatchObject(user);
+})
+
+test('register an invalid user', async () => {
+  testUser.name = null;
+  const registerRes1 = await request(app).post('/api/auth').send(testUser);
+  expect(registerRes1.status).toBe(400);
+
+  testUser.name = 'john';
+  testUser.email = null;
+  const registerRes2 = await request(app).post('/api/auth').send(testUser);
+  expect(registerRes2.status).toBe(400);
+
+  testUser.email = 'test@test.com';
+  testUser.password = null;
+  const registerRes3 = await request(app).post('/api/auth').send(testUser);
+  expect(registerRes3.status).toBe(400);
+})
+
+test('delete', async () => {
+  const deleteRes = await request(app).delete('/api/auth').set('Authorization', `Bearer ${testUserAuthToken}`);
+  // console.log(deleteRes);
+  expect(deleteRes.status).toBe(200);
+  
+  expect(await DB.isLoggedIn(testUserAuthToken)).toBeFalsy();
+})
