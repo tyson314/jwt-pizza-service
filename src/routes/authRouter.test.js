@@ -1,6 +1,15 @@
 const request = require('supertest');
 const app = require('../service');
-const { DB } = require('../database/database.js')
+const { Role, DB } = require('../database/database.js');
+
+async function createAdminUser() {
+  let user = { password: 'toomanysecrets', roles: [{ role: Role.Admin }] };
+  user.name = Math.random().toString(36).substring(2, 12);
+  user.email = user.name + '@admin.com';
+
+  const registerRes = await request(app).post('/api/auth').send(user);
+  return [user, registerRes.body.token];
+}
 
 const testUser = { name: 'pizza diner', email: 'reg@test.com', password: 'a' };
 let testUserAuthToken;
@@ -50,9 +59,28 @@ test('register an invalid user', async () => {
   expect(registerRes3.status).toBe(400);
 })
 
+test('update user unauthorized', async () => {
+  const updateRes = await request(app).put('/api/auth/1').set('Authorization', `Bearer ${testUserAuthToken}`).send({email:"a@jwt.com", password:"admin"});
+  expect(updateRes.status).toBe(403);
+})
+
+test('update user', async () => {
+  const ret = await createAdminUser();
+  const admin = ret[0];
+  const adminToken = ret[1];
+  console.log(admin);
+  console.log(adminToken);
+  const adminID = (await DB.getUser(admin.email, admin.password)).id;
+  const newLoginInfo = {email: 'hello@test.com', password: 'hello'};
+  
+  const updateRes = await request(app).put(`/api/auth/${adminID}`).set('Authorization', `Bearer ${adminToken}`).send(newLoginInfo);
+
+  expect(updateRes.status).toBe(200);
+  expect((await request(app).put('/api/auth').send(newLoginInfo)).status).toBe(200);
+})
+
 test('delete', async () => {
   const deleteRes = await request(app).delete('/api/auth').set('Authorization', `Bearer ${testUserAuthToken}`);
-  // console.log(deleteRes);
   expect(deleteRes.status).toBe(200);
   
   expect(await DB.isLoggedIn(testUserAuthToken)).toBeFalsy();
