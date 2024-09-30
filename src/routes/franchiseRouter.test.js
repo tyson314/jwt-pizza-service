@@ -103,3 +103,17 @@ test('create store unauthorized', async () => {
 
   expect(createRes.status).toBe(403);
 })
+
+test('delete store', async () => {
+  const storeID = (await request(app).post(`/api/franchise/${franchiseID}/store`)
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({franchiseID: franchiseID, name: 'pizza store'})).body.id;
+  
+  const deleteRes = await request(app).delete(`/api/franchise/${franchiseID}/store/${storeID}`).set('Authorization', `Bearer ${adminToken}`);
+
+  expect(deleteRes.status).toBe(200);
+  expect((await request(app).get(`/api/franchise/${adminID}`)
+    .set('Authorization', `Bearer ${adminToken}`))
+    .body[0].stores.length
+  ).toBe(0);
+})
