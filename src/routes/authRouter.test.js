@@ -1,8 +1,8 @@
 const request = require('supertest');
 const app = require('../service');
 const { Role, DB } = require('../database/database.js');
-
 async function createAdminUser() {
+  
   let user = { password: 'toomanysecrets', roles: [{ role: Role.Admin }] };
   user.name = Math.random().toString(36).substring(2, 12);
   user.email = user.name + '@admin.com';
@@ -68,8 +68,7 @@ test('update user', async () => {
   const ret = await createAdminUser();
   const admin = ret[0];
   const adminToken = ret[1];
-  console.log(admin);
-  console.log(adminToken);
+
   const adminID = (await DB.getUser(admin.email, admin.password)).id;
   const newLoginInfo = {email: 'hello@test.com', password: 'hello'};
   
