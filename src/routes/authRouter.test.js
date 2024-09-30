@@ -27,6 +27,7 @@ test('login', async () => {
 
   const { password, ...user } = { ...testUser, roles: [{ role: 'diner' }] };
   expect(loginRes.body.user).toMatchObject(user);
+  expect(password).toBeTruthy();
 });
 
 test('invalid login rejected', async () => {
@@ -41,6 +42,7 @@ test('register a new user', async () => {
 
   const { password, ...user } = { ...testUser, roles: [{ role: 'diner' }] };
   expect(registerRes.body.user).toMatchObject(user);
+  expect(password).toBeTruthy();
 })
 
 test('register an invalid user', async () => {
