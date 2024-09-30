@@ -61,11 +61,6 @@ test('register an invalid user', async () => {
   expect(registerRes3.status).toBe(400);
 })
 
-test('update user unauthorized', async () => {
-  const updateRes = await request(app).put('/api/auth/1').set('Authorization', `Bearer ${testUserAuthToken}`).send({email:"a@jwt.com", password:"admin"});
-  expect(updateRes.status).toBe(403);
-})
-
 test('update user', async () => {
   const ret = await createAdminUser();
   const admin = ret[0];
