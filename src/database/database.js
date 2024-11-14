@@ -4,6 +4,7 @@ const config = require('../config.js');
 const { StatusCodeError } = require('../endpointHelper.js');
 const { Role } = require('../model/model.js');
 const dbModel = require('./dbModel.js');
+const logger = require('../logger.js')
 class DB {
   constructor() {
     this.initialized = this.initializeDatabase();
@@ -12,7 +13,9 @@ class DB {
   async getMenu() {
     const connection = await this.getConnection();
     try {
-      const rows = await this.query(connection, `SELECT * FROM menu`);
+      const sql = `SELECT * FROM menu`;
+
+      const rows = await this.query(connection, sql);
       return rows;
     } finally {
       connection.end();
@@ -286,6 +289,8 @@ class DB {
   }
 
   async query(connection, sql, params) {
+    const formattedSql = mysql.format(sql, params);
+    logger.log('info', 'Database Query', formattedSql); 
     const [results] = await connection.execute(sql, params);
     return results;
   }
