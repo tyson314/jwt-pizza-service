@@ -8,6 +8,7 @@ async function createAdminUser() {
   user.email = user.name + '@admin.com';
 
   await DB.addUser(user);
+  
   user.password = 'toomanysecrets';
   const loginRes = await request(app).put('/api/auth').send(user);
   return [user, loginRes.body.token];

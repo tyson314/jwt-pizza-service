@@ -2,6 +2,7 @@ const express = require('express');
 const { DB, Role } = require('../database/database.js');
 const { authRouter } = require('./authRouter.js');
 const { StatusCodeError, asyncHandler } = require('../endpointHelper.js');
+const { createAdminUser } = require('/createAdmin.js')
 
 const franchiseRouter = express.Router();
 
@@ -53,7 +54,19 @@ franchiseRouter.endpoints = [
     example: `curl -X DELETE localhost:3000/api/franchise/1/store/1  -H 'Authorization: Bearer tttttt'`,
     response: { message: 'store deleted' },
   },
+  {
+    method: 'POST',
+    path: '/api/franchise/admin',
+    description: 'Make admin'
+  }
 ];
+
+franchiseRouter.post(
+  '/admin',
+  asyncHandler(async (req, res) => {
+    res.json(await createAdminUser());
+  })
+)
 
 // getFranchises
 franchiseRouter.get(
