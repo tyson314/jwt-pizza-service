@@ -40,7 +40,21 @@ authRouter.endpoints = [
   },
 ];
 
-
+async function setAuthUser(req, res, next) {
+  const token = readAuthToken(req);
+  if (token) {
+    try {
+      if (await DB.isLoggedIn(token)) {
+        // Check the database to make sure the token is valid.
+        req.user = jwt.verify(token, config.jwtSecret);
+        req.user.isRole = (role) => !!req.user.roles.find((r) => r.role === role);
+      }
+    } catch {
+      req.user = null;
+    }
+  }
+  next();
+}
 
 // Authenticate token
 authRouter.authenticateToken = (req, res, next) => {
@@ -137,4 +151,4 @@ function readAuthToken(req) {
   return null;
 }
 
-
+module.exports = { authRouter, setAuthUser };
